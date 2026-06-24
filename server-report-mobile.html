@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Server Report System</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --yellow:#ffea00;
+    --yellow-dark:#d8bd00;
+    --bg:#0a0a0a;
+    --panel:#111;
+    --field:#242424;
+    --border:#333;
+    --reason:#1d1d1d;
+    --reason-hover:#2a2a2a;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Inter, Arial, sans-serif;
+}
+
+html{
+    min-height:100%;
+    background:var(--bg);
+}
+
+body{
+    min-height:100vh;
+    background:var(--bg);
+    color:white;
+    overflow-x:hidden;
+}
+
+/* GLOW */
+.glow{
+    position:fixed;
+    width:min(760px, 115vw);
+    height:min(760px, 115vw);
+    background:var(--yellow);
+    filter:blur(250px);
+    opacity:0.2;
+    left:50%;
+    top:54px;
+    transform:translateX(-50%);
+    z-index:-1;
+    pointer-events:none;
+}
+
+/* HEADER */
+header{
+    padding:26px max(20px, 6vw) 12px;
+    font-weight:900;
+    font-size:clamp(24px, 5.5vw, 34px);
+}
+
+header span{
+    color:var(--yellow);
+}
+
+/* HERO */
+.hero{
+    text-align:center;
+    padding:44px 20px 36px;
+}
+
+.hero h1{
+    font-size:clamp(64px, 15vw, 118px);
+    line-height:0.96;
+    font-weight:900;
+    text-shadow:
+        0 0 18px rgba(255,234,0,0.42),
+        0 0 44px rgba(255,234,0,0.28),
+        0 0 82px rgba(255,234,0,0.18);
+}
+
+.hero span{
+    color:var(--yellow);
+    text-shadow:
+        0 0 18px rgba(255,234,0,0.72),
+        0 0 46px rgba(255,234,0,0.42),
+        0 0 95px rgba(255,234,0,0.24);
+}
+
+.hero p{
+    color:#bdbdbd;
+    margin-top:22px;
+    font-size:clamp(28px, 6vw, 44px);
+    font-weight:900;
+    text-shadow:
+        0 0 14px rgba(255,234,0,0.24),
+        0 0 34px rgba(255,234,0,0.18);
+}
+
+/* FORM */
+.container{
+    width:100%;
+    max-width:1100px;
+    margin:0 auto;
+    padding:22px max(16px, 4vw) 42px;
+}
+
+.box{
+    background:var(--panel);
+    border:2px solid #242424;
+    border-radius:22px;
+    padding:clamp(28px, 5vw, 48px);
+    box-shadow:0 24px 80px rgba(0,0,0,0.44);
+}
+
+label{
+    display:block;
+    margin-top:24px;
+    font-weight:800;
+    font-size:clamp(19px, 4vw, 24px);
+}
+
+label:first-child{
+    margin-top:0;
+}
+
+input, textarea{
+    width:100%;
+    min-height:72px;
+    padding:20px 22px;
+    margin-top:12px;
+    background:var(--field);
+    border:2px solid var(--border);
+    border-radius:18px;
+    color:white;
+    font-size:clamp(20px, 4vw, 24px);
+}
+
+input::placeholder, textarea::placeholder{
+    color:#c9c9c9;
+    opacity:0.82;
+}
+
+input:focus, textarea:focus{
+    border-color:var(--yellow);
+    outline:none;
+    box-shadow:0 0 0 4px rgba(255,234,0,0.15);
+}
+
+input.error, textarea.error{
+    border-color:#ff4d4d;
+    box-shadow:0 0 0 4px rgba(255,77,77,0.14);
+}
+
+textarea{
+    min-height:180px;
+    resize:vertical;
+}
+
+.field-note{
+    margin-top:10px;
+    color:#b9b9b9;
+    font-size:15px;
+    font-weight:700;
+}
+
+.field-note.error-text{
+    color:#ff7a7a;
+}
+
+.char-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:9px;
+    color:#cfcfcf;
+    font-size:15px;
+    font-weight:800;
+}
+
+.urgency-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:12px;
+    margin-top:12px;
+}
+
+.urgency-grid input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+
+.urgency-option{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:64px;
+    margin:0;
+    padding:14px 10px;
+    background:#202020;
+    border:2px solid #3b3b3b;
+    border-radius:16px;
+    color:#f4f4f4;
+    font-size:clamp(17px, 3.6vw, 21px);
+    font-weight:900;
+    text-align:center;
+    cursor:pointer;
+}
+
+.urgency-grid input:checked + .urgency-option{
+    border-color:var(--yellow);
+    color:#050505;
+    background:var(--yellow);
+    box-shadow:0 0 24px rgba(255,234,0,0.2);
+}
+
+/* BUTTON */
+button{
+    min-height:76px;
+    background:var(--yellow);
+    color:#050505;
+    border:2px solid var(--yellow);
+    border-radius:18px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 8px 0 var(--yellow-dark);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    -webkit-tap-highlight-color:transparent;
+}
+
+button{
+    width:100%;
+    margin-top:32px;
+    padding:22px 24px;
+    font-size:clamp(23px, 5vw, 30px);
+    letter-spacing:0;
+}
+
+button:hover{
+    filter:brightness(1.04);
+}
+
+button:active{
+    transform:translateY(5px);
+    box-shadow:0 3px 0 var(--yellow-dark);
+}
+
+button:disabled{
+    cursor:not-allowed;
+    opacity:0.55;
+    filter:grayscale(0.35);
+    transform:none;
+}
+
+/* POPUP */
+.popup{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) scale(0.9);
+    background:var(--panel);
+    border:3px solid var(--yellow);
+    padding:26px 22px;
+    border-radius:18px;
+    text-align:center;
+    opacity:0;
+    transition:0.25s;
+    width:min(340px, calc(100vw - 32px));
+    pointer-events:none;
+    z-index:20;
+    box-shadow:0 20px 80px rgba(0,0,0,0.5);
+}
+
+.popup h2{
+    color:var(--yellow);
+    font-size:30px;
+}
+
+.popup p{
+    margin-top:8px;
+    font-size:17px;
+}
+
+.popup.show{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+}
+
+.popup.error{
+    border-color:#ff4d4d;
+}
+
+.popup.error h2{
+    color:#ff6b6b;
+}
+
+.popup.info{
+    border-color:#8a8a8a;
+}
+
+/* MODAL */
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.78);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    padding:18px;
+    z-index:10;
+}
+
+.modal-content{
+    background:var(--panel);
+    border:4px solid var(--yellow);
+    padding:clamp(24px, 4.5vw, 38px);
+    border-radius:22px;
+    width:min(820px, 100%);
+    max-height:calc(100vh - 36px);
+    overflow:auto;
+}
+
+.modal-content h3{
+    color:var(--yellow);
+    font-size:clamp(28px, 7vw, 38px);
+    text-shadow:0 0 24px rgba(255,234,0,0.34);
+}
+
+/* GRID BUTTONS */
+.reason-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
+    margin-top:24px;
+}
+
+.reason{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:74px;
+    padding:18px 16px;
+    background:linear-gradient(180deg, #252525 0%, var(--reason) 100%);
+    color:#f7f7f7;
+    border:2px solid #3b3b3b;
+    border-radius:16px;
+    box-shadow:0 7px 0 #0d0d0d, inset 0 1px 0 rgba(255,255,255,0.08);
+    cursor:pointer;
+    font-size:clamp(18px, 3.8vw, 22px);
+    font-weight:900;
+    line-height:1.2;
+    text-align:center;
+    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+}
+
+.reason:hover{
+    background:linear-gradient(180deg, #303030 0%, var(--reason-hover) 100%);
+    border-color:rgba(255,234,0,0.72);
+}
+
+.reason:active{
+    transform:translateY(4px);
+    box-shadow:0 3px 0 #0d0d0d, inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* MOBILE */
+@media (max-width:700px){
+    header{
+        padding-top:22px;
+    }
+
+    .hero{
+        padding-top:30px;
+        padding-bottom:30px;
+    }
+
+    .container{
+        padding-left:10px;
+        padding-right:10px;
+    }
+
+    .box{
+        border-radius:20px;
+        padding:26px 16px;
+    }
+
+    input, textarea{
+        min-height:76px;
+        font-size:21px;
+        border-radius:18px;
+    }
+
+    textarea{
+        min-height:190px;
+    }
+
+    button{
+        min-height:82px;
+        font-size:24px;
+    }
+
+    .reason-grid{
+        grid-template-columns:1fr;
+        gap:13px;
+    }
+
+    .reason{
+        min-height:76px;
+        font-size:20px;
+    }
+
+    .urgency-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media (max-width:390px){
+    .hero h1{
+        font-size:58px;
+    }
+
+    button{
+        font-size:22px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="glow"></div>
+
+<header>
+Server <span>Report System</span>
+</header>
+
+<div class="hero">
+<h1>Spieler <span>Report</span></h1>
+<p>Moderations System</p>
+</div>
+
+<div class="container">
+<div class="box">
+
+<label>Minecraft Name</label>
+<input id="mc" autocomplete="nickname" placeholder="z. B. Steve123">
+
+<label>Discord Name</label>
+<input id="dc" autocomplete="username" placeholder="z. B. max#1234 oder max.mustermann">
+
+<label>Gemeldeter Spieler</label>
+<input id="target" autocomplete="off" placeholder="z. B. SpielerName">
+
+<label>Grund</label>
+<input id="reason" readonly onclick="openModal()" placeholder="z. B. Cheating / Hacks">
+
+<label>Dringlichkeit</label>
+<div class="urgency-grid">
+<input type="radio" id="urgency-normal" name="urgency" value="Normal" checked>
+<label class="urgency-option" for="urgency-normal">Normal</label>
+<input type="radio" id="urgency-important" name="urgency" value="Wichtig">
+<label class="urgency-option" for="urgency-important">Wichtig</label>
+<input type="radio" id="urgency-urgent" name="urgency" value="Sehr dringend">
+<label class="urgency-option" for="urgency-urgent">Sehr dringend</label>
+</div>
+
+<label>Beschreibung</label>
+<textarea id="desc" maxlength="1000" placeholder="z. B. Der Spieler ist geflogen und hat durch Wände geschlagen."></textarea>
+<div class="char-row"><span id="descCounter">0 / 1000 Zeichen</span></div>
+
+<label>Beweise (optional)</label>
+<input id="proof" inputmode="url" placeholder="z. B. Clip-Link oder Screenshot-Link">
+
+<div class="field-note error-text" id="formError"></div>
+
+<button id="submitBtn" onclick="sendReport()">REPORT ABSENDEN</button>
+
+</div>
+</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<h2 id="popupTitle">Gesendet</h2>
+<p id="popupText">Report erfolgreich abgeschickt</p>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal" onclick="closeOnOutside(event)">
+<div class="modal-content">
+
+<h3>Grund auswählen</h3>
+
+<div class="reason-grid">
+
+<div class="reason" onclick="setReason('Cheating / Hacks')">Cheating / Hacks</div>
+<div class="reason" onclick="setReason('Beleidigung / Toxic')">Beleidigung / Toxic</div>
+<div class="reason" onclick="setReason('Rassismus / Diskriminierung')">Rassismus</div>
+<div class="reason" onclick="setReason('Spam')">Spam</div>
+<div class="reason" onclick="setReason('Werbung')">Werbung</div>
+<div class="reason" onclick="setReason('Bug Abuse')">Bug Abuse</div>
+<div class="reason" onclick="setReason('Team Störung')">Team Störung</div>
+<div class="reason" onclick="setReason('Fake Reports')">Fake Reports</div>
+<div class="reason" onclick="setReason('Alt Accounts / Ban umgehen')">Alt Accounts</div>
+<div class="reason" onclick="setReason('DDOS / Drohungen')">DDOS / Drohungen</div>
+<div class="reason" onclick="setReason('Unangemessene Skins / Namen')">Skins / Namen</div>
+<div class="reason" onclick="setReason('Name nicht angemessen')">Name ungültig</div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+const webhook = "https://discord.com/api/webhooks/1519283213560840313/AwSg6yNYS6X1ueuJFn2CYoa3QPxCOvx3qPtqDag3Cz3AVDoSCS_WBAyTwlfCop9rfsL2";
+const cooldownSeconds = 30;
+let cooldownTimer = null;
+let cooldownLeft = 0;
+
+const fields = {
+    mc:document.getElementById("mc"),
+    dc:document.getElementById("dc"),
+    target:document.getElementById("target"),
+    reason:document.getElementById("reason"),
+    desc:document.getElementById("desc"),
+    proof:document.getElementById("proof")
+};
+
+const submitBtn = document.getElementById("submitBtn");
+const formError = document.getElementById("formError");
+const descCounter = document.getElementById("descCounter");
+
+function openModal(){
+    document.getElementById("modal").style.display="flex";
+}
+
+function closeOnOutside(e){
+    if(e.target.id === "modal"){
+        document.getElementById("modal").style.display="none";
+    }
+}
+
+function setReason(r){
+    document.getElementById("reason").value=r;
+    document.getElementById("modal").style.display="none";
+    fields.reason.classList.remove("error");
+}
+
+function getUrgency(){
+    const selected = document.querySelector('input[name="urgency"]:checked');
+    return selected ? selected.value : "Normal";
+}
+
+function updateCounter(){
+    descCounter.textContent = `${fields.desc.value.length} / 1000 Zeichen`;
+}
+
+function showPopup(type, title, text){
+    const popup = document.getElementById("popup");
+    document.getElementById("popupTitle").textContent = title;
+    document.getElementById("popupText").textContent = text;
+    popup.classList.remove("error", "info", "show");
+
+    if(type){
+        popup.classList.add(type);
+    }
+
+    setTimeout(()=>{
+        popup.classList.add("show");
+    },50);
+
+    setTimeout(()=>{
+        popup.classList.remove("show");
+    },3200);
+}
+
+function validateReport(){
+    const required = [
+        {field:fields.mc, message:"Bitte gib deinen Minecraft Namen ein."},
+        {field:fields.target, message:"Bitte gib den gemeldeten Spieler ein."},
+        {field:fields.reason, message:"Bitte wähle einen Grund aus."},
+        {field:fields.desc, message:"Bitte beschreibe kurz, was passiert ist."}
+    ];
+
+    Object.values(fields).forEach(field => field.classList.remove("error"));
+    formError.textContent = "";
+
+    for(const item of required){
+        if(!item.field.value.trim()){
+            item.field.classList.add("error");
+            formError.textContent = item.message;
+            item.field.focus();
+            return false;
+        }
+    }
+
+    if(fields.desc.value.trim().length < 20){
+        fields.desc.classList.add("error");
+        formError.textContent = "Bitte beschreibe den Vorfall etwas genauer.";
+        fields.desc.focus();
+        return false;
+    }
+
+    return true;
+}
+
+function setCooldown(){
+    cooldownLeft = cooldownSeconds;
+    submitBtn.disabled = true;
+    submitBtn.textContent = `WARTEN (${cooldownLeft}s)`;
+
+    cooldownTimer = setInterval(()=>{
+        cooldownLeft--;
+        submitBtn.textContent = `WARTEN (${cooldownLeft}s)`;
+
+        if(cooldownLeft <= 0){
+            clearInterval(cooldownTimer);
+            cooldownTimer = null;
+            submitBtn.disabled = false;
+            submitBtn.textContent = "REPORT ABSENDEN";
+        }
+    },1000);
+}
+
+function resetForm(){
+    fields.mc.value="";
+    fields.dc.value="";
+    fields.target.value="";
+    fields.reason.value="";
+    fields.desc.value="";
+    fields.proof.value="";
+    document.getElementById("urgency-normal").checked = true;
+    updateCounter();
+}
+
+async function sendReport(){
+    if(cooldownTimer){
+        showPopup("info", "Kurz warten", `Du kannst in ${cooldownLeft}s wieder senden.`);
+        return;
+    }
+
+    if(!validateReport()){
+        showPopup("error", "Fehlt noch was", formError.textContent);
+        return;
+    }
+
+    const time = new Date().toLocaleString("de-DE");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "SENDE...";
+
+    try{
+        const response = await fetch(webhook,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                embeds:[{
+                    title:"Neuer Spieler Report",
+                    color:0xffea00,
+                    fields:[
+                        {name:"Minecraft", value:fields.mc.value.trim() || "-"},
+                        {name:"Discord", value:fields.dc.value.trim() || "-"},
+                        {name:"Gemeldeter Spieler", value:fields.target.value.trim() || "-"},
+                        {name:"Grund", value:fields.reason.value.trim() || "-"},
+                        {name:"Dringlichkeit", value:getUrgency()},
+                        {name:"Beschreibung", value:fields.desc.value.trim() || "-"},
+                        {name:"Beweise", value:fields.proof.value.trim() || "Keine"},
+                        {name:"Zeit", value:time}
+                    ]
+                }]
+            })
+        });
+
+        if(!response.ok){
+            throw new Error("Report konnte nicht gesendet werden.");
+        }
+
+        showPopup("", "Gesendet", "Report erfolgreich abgeschickt.");
+        resetForm();
+        setCooldown();
+    }catch(error){
+        submitBtn.disabled = false;
+        submitBtn.textContent = "REPORT ABSENDEN";
+        showPopup("error", "Fehler", "Report konnte nicht gesendet werden. Prüfe den Webhook oder deine Internetverbindung.");
+    }
+}
+
+fields.desc.addEventListener("input", updateCounter);
+Object.values(fields).forEach(field=>{
+    field.addEventListener("input", ()=>{
+        field.classList.remove("error");
+        formError.textContent = "";
+    });
+});
+updateCounter();
+
+</script>
+
+</body>
+</html>
